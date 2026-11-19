@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mòbils i NOFC · Verificador de cobertura normativa</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&family=Source+Serif+4:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f6f4ef; --card:#ffffff; --ink:#1f2328; --muted:#5b6370; --line:#e3ded3;
+  --accent:#1d5c63; --accent-soft:#e3eff0;
+  --ok:#2e7d4f; --ok-bg:#e6f3ea; --warn:#a56200; --warn-bg:#fdf1dc; --ko:#b3261e; --ko-bg:#fbe6e4;
+  --q:#6b7280; --q-bg:#eef0f3;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Source Sans 3",system-ui,sans-serif;background:var(--bg);color:var(--ink);line-height:1.5;font-size:16px}
+header{background:var(--accent);color:#fff;padding:28px 20px 22px}
+.wrap{max-width:1060px;margin:0 auto;padding:0 20px}
+header .wrap{padding:0}
+h1{font-family:"Source Serif 4",Georgia,serif;font-size:clamp(1.5rem,3.2vw,2.2rem);margin:0 0 6px;line-height:1.2}
+header p{margin:0;opacity:.9;max-width:760px}
+.alert{background:#fff7e6;border:1px solid #f0c674;border-left:6px solid var(--warn);border-radius:10px;padding:14px 16px;margin:20px 0 4px}
+.alert strong{color:#7a4800}
+nav.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:22px 0 18px;border-bottom:2px solid var(--line)}
+nav.tabs button{font:inherit;font-weight:600;background:none;border:none;padding:10px 14px;cursor:pointer;color:var(--muted);border-bottom:3px solid transparent;margin-bottom:-2px}
+nav.tabs button[aria-selected="true"]{color:var(--accent);border-bottom-color:var(--accent)}
+section.view{display:none;padding-bottom:50px}
+section.view.active{display:block}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin-bottom:14px}
+h2{font-family:"Source Serif 4",Georgia,serif;font-size:1.35rem;margin:6px 0 10px}
+h3{font-size:1.05rem;margin:0 0 6px}
+.muted{color:var(--muted)}
+.stages{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+.stages label{display:flex;align-items:center;gap:8px;background:var(--accent-soft);border-radius:999px;padding:7px 14px;cursor:pointer;font-weight:600}
+.q{border-left:4px solid var(--line)}
+.q.ok{border-left-color:var(--ok)} .q.warn{border-left-color:var(--warn)} .q.ko{border-left-color:var(--ko)} .q.unk{border-left-color:var(--q)}
+.q .num{font-size:.8rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.q .text{font-weight:600;margin:2px 0 10px}
+.ans{display:flex;gap:8px;flex-wrap:wrap}
+.ans button{font:inherit;border:1px solid var(--line);background:#fff;border-radius:8px;padding:6px 14px;cursor:pointer}
+.ans button.sel{background:var(--accent);color:#fff;border-color:var(--accent)}
+.fb{margin-top:12px;border-radius:8px;padding:10px 12px;font-size:.95rem;display:none}
+.fb.show{display:block}
+.fb.ok{background:var(--ok-bg)} .fb.warn{background:var(--warn-bg)} .fb.ko{background:var(--ko-bg)} .fb.unk{background:var(--q-bg)}
+.fb .tag{font-weight:700;margin-right:6px}
+.fb.ok .tag{color:var(--ok)} .fb.warn .tag{color:var(--warn)} .fb.ko .tag{color:var(--ko)} .fb.unk .tag{color:var(--q)}
+.ref{display:block;margin-top:6px;font-size:.85rem;color:var(--muted)}
+.summary{position:sticky;top:0;z-index:5;background:var(--bg);padding:10px 0}
+.pills{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.pill{border-radius:999px;padding:5px 12px;font-weight:700;font-size:.9rem}
+.pill.ok{background:var(--ok-bg);color:var(--ok)} .pill.warn{background:var(--warn-bg);color:var(--warn)} .pill.ko{background:var(--ko-bg);color:var(--ko)} .pill.unk{background:var(--q-bg);color:var(--q)}
+.btn{font:inherit;font-weight:600;background:var(--accent);color:#fff;border:none;border-radius:8px;padding:8px 14px;cursor:pointer}
+.btn.ghost{background:#fff;color:var(--accent);border:1px solid var(--accent)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+.mesura{border-top:6px solid var(--line);margin:0}
+.mesura.ok{border-top-color:var(--ok)} .mesura.warn{border-top-color:var(--warn)} .mesura.ko{border-top-color:var(--ko)}
+.mesura .lbl{font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.mesura.ok .lbl{color:var(--ok)} .mesura.warn .lbl{color:var(--warn)} .mesura.ko .lbl{color:var(--ko)}
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
+.filters input{font:inherit;padding:8px 12px;border:1px solid var(--line);border-radius:8px;min-width:240px;flex:1}
+.filters button{font:inherit;border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 12px;cursor:pointer}
+.filters button.sel{background:var(--ink);color:#fff;border-color:var(--ink)}
+.badge{display:inline-block;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;border-radius:999px;padding:3px 10px;margin-bottom:6px}
+.badge.of{background:var(--accent-soft);color:var(--accent)} .badge.co{background:#efe9dc;color:#6b5a2e}
+.note{background:var(--warn-bg);border-radius:8px;padding:8px 12px;font-size:.9rem;margin-top:4px}
+.clause pre{white-space:pre-wrap;font-family:"Source Sans 3",sans-serif;background:#faf8f3;border:1px dashed var(--line);border-radius:8px;padding:12px;margin:10px 0 8px;font-size:.95rem}
+table{width:100%;border-collapse:collapse;font-size:.95rem}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{background:#faf8f3}
+a{color:var(--accent)}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:8px;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.show{opacity:1}
+#reportBox{width:100%;min-height:220px;font:inherit;font-size:.9rem;border:1px solid var(--line);border-radius:8px;padding:10px;display:none;margin-top:10px}
+footer{border-top:1px solid var(--line);padding:18px 0 30px;font-size:.88rem;color:var(--muted)}
+@media (max-width:600px){.card{padding:14px}}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <h1>Mòbils als centres: les nostres NOFC tenen cobertura normativa?</h1>
+    <p>Eina d'autodiagnosi per als equips directius. Contrasta les mesures i els redactats de les NOFC amb el marc vigent i assenyala què és conforme, què cal revisar i què probablement incompleix la normativa.</p>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="alert">
+    <strong>Atenció: les instruccions de gener de 2024 ja no són el marc de referència.</strong>
+    El document DOIGC <em>Ús de dispositius mòbils en el centre</em> (actualització del 10 de juny de 2026) estableix que no es poden fer servir mòbils ni rellotges intel·ligents a l'educació infantil ni a l'obligatòria, tampoc a l'ESO. Les NOFC s'hi han d'adequar i el document és aplicable des de l'inici del curs 2026-2027. L'antiga «Opció 2» de l'ESO, que permetia usos educatius autoritzats, ja no existeix. Si les NOFC es van redactar amb la infografia de 2024, cal revisar-les.
+  </div>
+
+  <nav class="tabs" role="tablist">
+    <button role="tab" data-v="autodiagnosi" aria-selected="true">1 · Autodiagnosi de les NOFC</button>
+    <button role="tab" data-v="semafor" aria-selected="false">2 · Semàfor de mesures</button>
+    <button role="tab" data-v="clausules" aria-selected="false">3 · Redactats orientatius</button>
+    <button role="tab" data-v="canvis" aria-selected="false">4 · Què ha canviat</button>
+    <button role="tab" data-v="normativa" aria-selected="false">5 · Marc normatiu</button>
+  </nav>
+
+  <!-- AUTODIAGNOSI -->
+  <section class="view active" id="autodiagnosi">
+    <div class="card">
+      <h2>Quines etapes té el centre?</h2>
+      <p class="muted">Les preguntes s'adapten a les etapes que marqueu. Respondre amb les NOFC i la carta de compromís al davant.</p>
+      <div class="stages">
+        <label><input type="checkbox" value="pri" checked> Educació infantil i primària</label>
+        <label><input type="checkbox" value="eso" checked> ESO</label>
+        <label><input type="checkbox" value="post"> Batxillerat / CFGM</label>
+      </div>
+    </div>
+    <div class="summary">
+      <div class="pills">
+        <span class="pill ok" id="cOk">0 conformes</span>
+        <span class="pill warn" id="cWarn">0 a revisar</span>
+        <span class="pill ko" id="cKo">0 incompliments probables</span>
+        <span class="pill unk" id="cUnk">0 pendents de comprovar</span>
+        <span class="muted" id="cTotal"></span>
+        <span style="flex:1"></span>
+        <button class="btn" id="btnReport">Generar informe</button>
+        <button class="btn ghost" id="btnReset">Reiniciar</button>
+      </div>
+      <textarea id="reportBox" readonly></textarea>
+    </div>
+    <div id="questions"></div>
+  </section>
+
+  <!-- SEMAFOR -->
+  <section class="view" id="semafor">
+    <div class="card">
+      <h2>Aquesta mesura, té cobertura?</h2>
+      <p class="muted">Mesures habituals que els centres incorporen a les NOFC o apliquen en el dia a dia, classificades segons el marc vigent. <b style="color:var(--ok)">Verd</b>: té cobertura. <b style="color:var(--warn)">Taronja</b>: zona grisa, cal matisar-la, motivar-la o consultar la Inspecció. <b style="color:var(--ko)">Vermell</b>: probablement no té cobertura o contradiu la normativa.</p>
+    </div>
+    <div class="filters">
+      <input type="search" id="search" placeholder="Cerca una mesura (p. ex. retirar, fotos, sortides, rellotge…)">
+      <button data-f="all" class="sel">Totes</button>
+      <button data-f="ok">Verd</button>
+      <button data-f="warn">Taronja</button>
+      <button data-f="ko">Vermell</button>
+    </div>
+    <div class="grid" id="mesures"></div>
+  </section>
+
+  <!-- CLAUSULES -->
+  <section class="view" id="clausules">
+    <div class="card">
+      <h2>Redactats per a les NOFC i la carta de compromís</h2>
+      <p class="muted">Les <b>propostes oficials</b> reprodueixen els models de redacció de la intranet (Portal de centre). Segons la intranet, els centres poden fer la seva pròpia redacció si compleixen el marc d'usos. Els <b>textos complementaris</b> cobreixen continguts obligatoris de les NOFC que els models no detallen. Qualsevol canvi a les NOFC l'ha d'aprovar el consell escolar.</p>
+      <p class="muted">Estructura recomanada per la intranet: <b>1. Disposició general · 2. Excepcions · 3. Compliment i faltes</b>.</p>
+    </div>
+    <div class="card" style="border-left:6px solid var(--warn)">
+      <h3>Atenció: els models de la intranet i el DOIGC de juny de 2026 no coincideixen en tot</h3>
+      <ul style="margin:6px 0 0;padding-left:20px">
+        <li><b>Excepcions.</b> La intranet proposa excepcions «per a totes les etapes» (salut, NESE, transport i desplaçaments, emergències). El DOIGC en fixa una llista tancada: a l'ESO, quatre supòsits per acord del consell escolar, i a totes les etapes obligatòries, l'alumnat amb NEE a través de la CAEI i el PSI. Transport i emergències no hi apareixen, i al transport el DOIGC demana que el mòbil vagi apagat i desat.</li>
+        <li><b>Negar-se a lliurar el mòbil.</b> La intranet ho qualifica de falta «molt greu». El DOIGC parla de falta «greu». Totes dues qualificacions entren dins les conductes greument perjudicials i segueixen el procediment de l'art. 25 del Decret 102/2010.</li>
+        <li><b>Excepcions a l'ESO.</b> El DOIGC exigeix que les aprovi el consell escolar i que constin a les NOFC. Els models de la intranet no ho esmenten.</li>
+      </ul>
+      <p class="muted" style="margin:8px 0 0">Recomanació: on hi hagi divergència, seguiu el DOIGC, que és la instrucció més recent, i consulteu la Inspecció si voleu mantenir una excepció que només recull el model de la intranet.</p>
+    </div>
+    <div id="clauses"></div>
+  </section>
+
+  <!-- CANVIS -->
+  <section class="view" id="canvis">
+    <div class="card">
+      <h2>Instruccions de gener de 2024 i DOIGC vigent</h2>
+      <p class="muted">Per detectar redactats de les NOFC que han quedat desfasats.</p>
+      <table>
+        <thead><tr><th>Aspecte</th><th>Gener 2024</th><th>Marc vigent (DOIGC, actualització 10/06/2026)</th></tr></thead>
+        <tbody>
+          <tr><td>Principi general</td><td>Ús del mòbil reduït al mínim i justificat educativament.</td><td>No es poden fer servir mòbils a l'educació infantil ni a l'educació bàsica. A la resta d'estudis, només amb finalitat pedagògica indicada pel professorat.</td></tr>
+          <tr><td>Rellotges intel·ligents</td><td>No s'esmentaven (el document parlava de smartphones).</td><td>Inclosos expressament.</td></tr>
+          <tr><td>ESO</td><td>El centre triava entre l'Opció 1 (prohibició total) i l'Opció 2 (restricció, excepte usos educatius autoritzats).</td><td><b>Prohibit, igual que a infantil i primària.</b> L'Opció 2 desapareix. El centre ha de facilitar els dispositius quan les situacions d'aprenentatge ho requereixin.</td></tr>
+          <tr><td>Abast</td><td>Horari lectiu i no lectiu.</td><td>Igual. S'hi afegeix el transport escolar, on el mòbil ha d'anar apagat i desat.</td></tr>
+          <tr><td>Excepcions</td><td>Situacions específiques obertes, que concretava el centre (necessitats educatives, salut, sortides, transport, emergències…).</td><td>Llista tancada. <b>A l'ESO</b>, per acord del consell escolar i recollides a les NOFC: convivències amb pernoctació, viatge de final d'etapa, Erasmus+ o intercanvis, i malalties amb seguiment pel mòbil. <b>Alumnat amb NEE</b> (infantil, primària i ESO): via CAEI i PSI. A primària no hi ha excepcions per a sortides.</td></tr>
+          <tr><td>Projectes singulars</td><td>Possibles amb 2/3 del consell escolar i autorització dels Serveis Territorials.</td><td>Desapareixen del document.</td></tr>
+          <tr><td>Custòdia</td><td>Custòdia fins al final de la jornada i avís a la família.</td><td>Retirada, custòdia i avís a la família, sense durada fixada: el protocol el concreta cada centre a les NOFC.</td></tr>
+          <tr><td>On es desa el mòbil</td><td>Motxilla, taquilla o caixa a l'aula.</td><td>El centre determina el lloc segur. Per al debat, el document planteja tres opcions: motxilla, fora del centre o espais de custòdia.</td></tr>
+          <tr><td>Contingut obligatori de les NOFC</td><td>Faltes, mesures i protocols.</td><td>Cinc continguts: tipologia de faltes, mesures correctores o sancionadores, protocols davant usos indeguts, procediment i lloc de desada, i situacions excepcionals. Aplicable des de l'inici del curs 2026-2027.</td></tr>
+          <tr><td>Debat previ</td><td>Recomanat.</td><td>Recomanat, amb un nou bloc sobre les sortides amb pernoctació: en quins cursos, si es diferencien per durada i si l'ús es limita en el temps.</td></tr>
+          <tr><td>Postobligatori</td><td>Ús vinculat a les activitats d'aprenentatge.</td><td>Igual. A més, l'ús educatiu s'ha d'integrar en el projecte educatiu del centre i introduir-se de manera graduada.</td></tr>
+          <tr><td>Garanties</td><td>No es pot revisar el contingut. No lliurar-lo quan es requereix és greu.</td><td>Igual. S'hi afegeix explícitament que la gravetat s'ha d'ajustar a la proporcionalitat.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- NORMATIVA -->
+  <section class="view" id="normativa">
+    <div class="card">
+      <h2>Fonts que donen (o treuen) cobertura</h2>
+      <table>
+        <thead><tr><th>Norma</th><th>Per a què serveix en aquest tema</th></tr></thead>
+        <tbody>
+          <tr><td colspan="2" style="background:var(--accent-soft)"><b>Normativa que cita el DOIGC (apartat 6)</b></td></tr>
+          <tr><td><b>DOIGC · Ús de dispositius mòbils en el centre</b><br><span class="muted">Portal de centre › DOIGC › Organització del centre. Actualització: 10/06/2026</span></td><td>Instrucció de referència: marc per etapes, excepcions, contingut obligatori de les NOFC i de la carta de compromís, faltes i garanties.</td></tr>
+          <tr><td><b>Llei 12/2009, del 10 de juliol, d'educació</b> (DOGC núm. 5422, de 16.7.2009), capítol V</td><td>Convivència: defineix faltes, sancions i mesures correctores. Les NOFC no poden crear sancions noves per a les faltes greus.</td></tr>
+          <tr><td><b>Decret 102/2010, de 3 d'agost, d'autonomia dels centres educatius</b> (DOGC núm. 5686, de 5.8.2010)</td><td>Art. 23: conductes contràries a les normes de convivència (citat als models de la intranet). Art. 19.1.e: contingut mínim de les NOFC (irregularitats, mesures correctores, atenuants i agreujants). Art. 24: irregularitats o faltes. Art. 25: procediment disciplinari.</td></tr>
+          <tr><td><b>Propostes de redacció per a les NOFC i la carta de compromís</b><br><span class="muted">Intranet · Portal de centre</span></td><td>Models orientatius de redacció. Els centres poden fer-ne una redacció pròpia si compleixen el marc d'usos (apartat 3 d'aquesta eina).</td></tr>
+          <tr><td colspan="2" style="background:var(--accent-soft)"><b>Normativa general a què remet el DOIGC sense citar-la</b> <span class="muted">(«protecció de dades i drets fonamentals», «normativa d'educació inclusiva», «responsabilitats penals»)</span></td></tr>
+          <tr><td><b>Decret 150/2017, de 17 d'octubre, de l'atenció educativa a l'alumnat en el marc d'un sistema educatiu inclusiu</b></td><td>Base de la CAEI i del PSI per a les excepcions de l'alumnat amb NEE. Els models de la intranet el citen, juntament amb el Decret 102/2010, com a marc per elaborar les NOFC.</td></tr>
+          <tr><td><b>Constitució espanyola, art. 18</b></td><td>Intimitat, pròpia imatge i secret de les comunicacions: fonament de la prohibició de revisar el mòbil.</td></tr>
+          <tr><td><b>RGPD (UE) 2016/679</b> i <b>LO 3/2018 (LOPDGDD)</b></td><td>Imatges de l'alumnat, ús de dispositius personals per part del personal i drets digitals dels menors.</td></tr>
+          <tr><td><b>LO 8/2021 (LOPIVI)</b></td><td>Protocols davant la violència (inclou el ciberassetjament) i figura del coordinador o coordinadora de benestar i protecció.</td></tr>
+          <tr><td><b>LO 5/2000, de responsabilitat penal dels menors</b> i <b>Codi penal</b></td><td>Quan l'ús del mòbil pot ser delicte. Des dels 14 anys hi ha responsabilitat penal de menors.</td></tr>
+        </tbody>
+      </table>
+      <p class="muted" style="margin-top:12px">Referències orientatives: consulteu sempre el text consolidat i la versió del DOIGC vigent en el moment d'aplicar-les. Davant de dubtes concrets, adreceu-vos a la Inspecció d'Educació o a l'assessoria jurídica dels Serveis Territorials.</p>
+    </div>
+  </section>
+
+  <footer>
+    Eina orientativa elaborada a partir del DOIGC «Ús de dispositius mòbils en el centre» (actualització del 10 de juny de 2026, aplicable des del curs 2026-2027), la Llei 12/2009 d'educació i el Decret 102/2010. No substitueix l'assessorament de la Inspecció d'Educació ni dels serveis jurídics del Departament. · CRP Montsià
+  </footer>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const DOIGC = "DOIGC «Ús de dispositius mòbils en el centre» (actualització 10/06/2026)";
+// e: etapes on aplica (pri, eso, post, any = sempre). y/n/u = resultat segons resposta [estat, missatge, referència]
+const Q = [
+ {id:"g1", e:["any"], t:"Les NOFC s'han actualitzat amb el DOIGC vigent (no només amb la infografia de gener de 2024) i el consell escolar n'ha aprovat la modificació?",
+  y:["ok","Correcte. Comproveu que l'acta del consell escolar en deixa constància i que les NOFC inclouen els cinc continguts obligatoris: tipologia de faltes, mesures correctores o sancionadores, protocols davant usos indeguts, procediment i lloc de desada, i situacions excepcionals.",DOIGC+", apartats 4.1 i 4.2"],
+  n:["ko","Les NOFC s'han d'actualitzar d'acord amb aquest document, aplicable des de l'inici del curs 2026-2027, i el consell escolar ha d'aprovar-ne la modificació. Unes NOFC desfasades donen menys cobertura a les mesures que s'apliquen.",DOIGC+", apartats 4.1 i 4.2"]},
+ {id:"g2", e:["any"], t:"La carta de compromís educatiu fa una referència específica a l'ús dels mòbils, tant en els compromisos del centre (informar dels acords sobre mòbils) com en els de la família (respectar-ne la regulació)?",
+  y:["ok","Correcte. Els redactats de la intranet per a tots dos compromisos són a l'apartat 3 d'aquesta eina.",DOIGC+", apartat 4.1; model carta intranet"],
+  n:["ko","El DOIGC demana que la carta de compromís faci una referència específica a l'ús dels mòbils. Sense aquesta referència, el protocol de retirada i custòdia queda més exposat a queixes.",DOIGC]},
+ {id:"o1", e:["pri","eso"], t:"Les NOFC inclouen expressament els rellotges intel·ligents (i altres dispositius amb funcions equivalents)?",
+  y:["ok","Correcte.",DOIGC],
+  n:["ko","El marc vigent inclou els rellotges intel·ligents. Si les NOFC només parlen de «telèfons mòbils», és difícil aplicar mesures quan l'alumne fa servir un rellotge.",DOIGC]},
+ {id:"e1", e:["eso"], t:"Les NOFC permeten a l'ESO l'ús del mòbil personal per a activitats pedagògiques indicades pel docent (l'antiga «Opció 2»)?",
+  y:["ko","Des del curs 2025-2026 no està permès l'ús del mòbil a l'ESO, tampoc amb finalitat pedagògica. Si una activitat requereix tecnologia, cal fer servir dispositius del centre o l'ordinador.",DOIGC],
+  n:["ok","Correcte: és coherent amb la prohibició general a l'educació obligatòria.",DOIGC]},
+ {id:"o2", e:["pri","eso"], t:"La prohibició s'aplica també a l'horari no lectiu: benvinguda, entrades i sortides, esbarjo, menjador, extraescolars i activitats complementàries (incloses les sortides)? I al transport escolar, el mòbil ha d'anar apagat i desat?",
+  y:["ok","Correcte.",DOIGC],
+  n:["ko","A l'educació infantil i obligatòria, la prohibició abasta l'horari lectiu i el no lectiu, també les extraescolars i les activitats complementàries. L'obligació de portar-lo apagat i desat també s'aplica al transport escolar. Unes NOFC que la limiten a l'aula són incompletes.",DOIGC+", apartat 3.1"]},
+ {id:"o3", e:["pri","eso"], t:"Les NOFC concreten el procediment i el lloc on es desa el dispositiu apagat (motxilla, espai de custòdia, o que no s'entri al centre) i qui en té la custòdia?",
+  y:["ok","Correcte. Si el centre recull els dispositius, deixeu clar qui els custodia i on, per evitar problemes en cas de pèrdua o desperfecte.",DOIGC+", apartats 3.1 i 4.1"],
+  n:["ko","És un dels continguts obligatoris de les NOFC: el procediment i el lloc establert per desar el dispositiu. El centre ha de vetllar perquè l'alumnat no en faci ús.",DOIGC+", apartats 3.1 i 4.1"]},
+ {id:"g3", e:["any"], t:"Les NOFC o la pràctica del centre preveuen que el personal pugui revisar el contingut del mòbil, demanar que es desbloquegi o mirar fotos o missatges?",
+  y:["ko","El DOIGC ho recull com a garantia: no es pot revisar el contingut del mòbil de l'alumnat. Afecta drets fonamentals (intimitat i secret de les comunicacions). Si se sospita d'un ús delictiu, cal activar el protocol corresponent i, si escau, comunicar-ho a la família i a les autoritats competents.",DOIGC+", apartat 4.3; art. 18 CE"],
+  n:["ok","Correcte. Convé que les NOFC ho diguin explícitament: el centre retira i custodia, però no accedeix al contingut.",DOIGC]},
+ {id:"g4", e:["any"], t:"Les NOFC recullen un protocol per als usos indeguts: retirada i custòdia del dispositiu, avís a la família i forma de retorn?",
+  y:["ok","Correcte. És un dels continguts obligatoris de les NOFC. El model de la intranet proposa custodiar el mòbil fins al final de la jornada, amonestar l'alumne i comunicar-ho a la família.",DOIGC+", apartats 4.1 i 4.3; model NOFC intranet"],
+  n:["ko","És contingut obligatori de les NOFC: els protocols d'acció davant els usos indeguts, com la custòdia del dispositiu i l'avís a la família. Concreteu-hi també qui custodia, on i com es retorna.",DOIGC+", apartat 4.1"]},
+ {id:"g5", e:["any"], t:"La retenció del dispositiu pot allargar-se més enllà de la jornada (dies, setmanes, fins a final de trimestre…)?",
+  y:["warn","El DOIGC no fixa la durada de la custòdia, però els models de redacció de la intranet la situen «fins al final de la jornada». Les retencions llargues d'un bé que és propietat de la família s'han de valorar amb el criteri de proporcionalitat que exigeix el document. Si es volen mantenir, han d'estar tipificades a les NOFC com a mesura correctora, ser graduades i preveure que la família el pugui recollir. En cas de dubte, consulteu-ho amb la Inspecció.",DOIGC+", apartat 4.3; art. 24 Decret 102/2010"],
+  n:["ok","Correcte.",DOIGC]},
+ {id:"g6", e:["any"], t:"Les NOFC distingeixen les irregularitats (amb mesures correctores) de les faltes greument perjudicials per a la convivència (amb sancions) i fixen atenuants i agreujants?",
+  y:["ok","Correcte.","Art. 19.1.e i 24 Decret 102/2010; art. 37 LEC"],
+  n:["ko","És contingut obligatori de les NOFC. Sense aquesta distinció, les mesures que s'apliquen tenen poca base i s'exposen a reclamacions.","Art. 19.1.e i 24 Decret 102/2010"]},
+ {id:"g7", e:["any"], t:"Qualsevol ús del mòbil es considera automàticament falta greu?",
+  y:["ko","És desproporcionat. Les faltes greus són les que defineix la normativa (LEC). L'exemple del DOIGC és clar: un mòbil encès que sona a la motxilla és una irregularitat. Segons el DOIGC, la gravetat s'ha d'ajustar a la proporcionalitat i a la resta de faltes de les NOFC.",DOIGC+", apartat 4.3; art. 37 LEC"],
+  n:["ok","Correcte: la gravetat es gradua segons la conducta.",DOIGC]},
+ {id:"g8", e:["any"], t:"Les NOFC preveuen que negar-se a lliurar el mòbil quan es requereix és una conducta greu?",
+  y:["ok","Correcte. El DOIGC ho qualifica de falta greu i el model de la intranet, de molt greu. Totes dues qualificacions condueixen al procediment de l'art. 25 del Decret 102/2010.",DOIGC+", apartat 4.3; model NOFC intranet"],
+  n:["warn","El DOIGC considera greu no lliurar el dispositiu quan es requereix. Convé recollir-ho a les NOFC perquè sigui previsible.",DOIGC]},
+ {id:"g9", e:["any"], t:"Les NOFC preveuen sancions econòmiques, pagaments per recuperar el mòbil o sancions col·lectives al grup?",
+  y:["ko","No hi tenen cobertura. Les sancions per faltes greus són les que fixa la LEC i no n'hi ha cap d'econòmica. Les mesures correctores han de tenir finalitat educativa i ser individuals.","Art. 37 LEC; art. 24 Decret 102/2010"],
+  n:["ok","Correcte.",""]},
+ {id:"g10", e:["any"], t:"Les sancions per faltes greus (p. ex. gravar o difondre imatges vexatòries) les imposa la direcció seguint el procediment de l'article 25 del Decret 102/2010?",
+  y:["ok","Correcte.","Art. 25 Decret 102/2010; "+DOIGC],
+  n:["ko","Només la direcció pot imposar sancions per faltes greus, amb el procediment establert (instrucció, audiència de l'alumne i la família, resolució). El professorat no pot decidir per si mateix que una conducta és greu.","Art. 25 Decret 102/2010; "+DOIGC]},
+ {id:"g11", e:["any"], t:"Hi ha un protocol per als casos en què el mal ús pot ser ciberassetjament o delicte (gravacions íntimes, difusió, amenaces)?",
+  y:["ok","Correcte. Comproveu que inclou el paper de la coordinació de benestar i protecció i la comunicació, si escau, a Mossos o Fiscalia de Menors.","LOPIVI; protocols del Departament"],
+  n:["warn","El DOIGC recorda que algunes conductes poden comportar responsabilitats penals. Convé referenciar el protocol de ciberassetjament del Departament i definir qui actua. La responsabilitat penal de menors s'aplica a partir dels 14 anys.",DOIGC+", apartat 2; LOPIVI art. 34-35; LO 5/2000"]},
+ {id:"e2", e:["eso"], t:"Si el centre permet el mòbil a l'ESO en alguna situació excepcional (convivències amb pernoctació, viatge de final d'etapa, Erasmus+ o intercanvis, malalties que requereixen seguiment pel mòbil, com la diabetis), hi ha acord del consell escolar i està recollit a les NOFC?",
+  y:["ok","Correcte. El DOIGC suggereix concretar en quins cursos s'autoritza i si l'ús es limita en el temps durant la sortida.",DOIGC+", apartats 3.1 i 4.2"],
+  n:["ko","Aquestes excepcions són potestatives (el centre «pot autoritzar»), però només tenen cobertura amb acord del consell escolar i si estan recollides a les NOFC. Si no hi són, el mòbil no es pot permetre en aquestes situacions.",DOIGC+", apartat 3.1"]},
+ {id:"e3", e:["pri","eso"], t:"El centre aplica excepcions no previstes al DOIGC (p. ex. ús a l'esbarjo per a 4t d'ESO, fer fotos en una activitat, permetre'l a les colònies de primària, ús lliure al menjador)?",
+  y:["ko","El DOIGC només preveu excepcions a l'ESO (els quatre supòsits) i per a l'alumnat amb NEE, i els models de la intranet hi afegeixen salut, transport i emergències (vegeu la pregunta corresponent). A infantil i primària no hi ha excepcions per a sortides ni colònies: el model de la intranet hi inclou expressament les colònies. Qualsevol altra excepció no té cobertura: si el centre la considera necessària, ho ha de consultar amb la Inspecció abans d'aplicar-la.",DOIGC+", apartat 3.1"],
+  n:["ok","Correcte.",DOIGC]},
+ {id:"g12", e:["pri","eso"], t:"Les NOFC preveuen que l'alumnat amb NEE pugui fer servir dispositius mòbils quan sigui necessari, amb el tipus de dispositiu i les condicions definits per la CAEI i recollits al PSI?",
+  y:["ok","Correcte.",DOIGC+", apartat 3.1"],
+  n:["ko","El DOIGC permet aquest ús quan sigui necessari per garantir l'accessibilitat, la participació i l'aprenentatge de l'alumnat amb NEE. Una prohibició absoluta, sense aquesta previsió, contradiu el document i la normativa d'educació inclusiva.",DOIGC+", apartat 3.1; Decret 150/2017"]},
+ {id:"o6", e:["pri"], t:"A infantil i primària, les NOFC preveuen l'ús del dispositiu per motius de salut (alumnat que ha de monitorar constants)?",
+  y:["ok","Correcte. El model de la intranet ho proposa per a totes les etapes. Com que el DOIGC només recull aquesta excepció expressament per a l'ESO, convé que consti a les NOFC i, si escau, al PSI.","Model NOFC intranet; "+DOIGC+", apartat 3.1"],
+  n:["warn","El model de la intranet proposa aquesta excepció per a totes les etapes. Sense aquesta previsió, el centre no té una resposta clara per a un alumne amb diabetis o una situació semblant.","Model NOFC intranet"]},
+ {id:"o5", e:["pri","eso"], t:"Les NOFC permeten l'ús del mòbil per comunicar-se amb la família en emergències, o al transport i en desplaçaments per a alumnat que viu lluny?",
+  y:["warn","Els models de la intranet inclouen aquestes excepcions, però el DOIGC de juny de 2026 no, i al transport escolar hi demana el mòbil apagat i desat. Si les manteniu, limiteu-les a comunicar-se amb la família, definiu què és una emergència, feu-les aprovar pel consell escolar i confirmeu-les amb la Inspecció.","Model NOFC intranet; "+DOIGC+", apartat 3.1"],
+  n:["ok","Correcte i coherent amb el DOIGC. Assegureu-vos que hi ha un canal alternatiu (secretaria) per a les emergències.",DOIGC+", apartats 3.1 i 5"]},
+ {id:"g18", e:["any"], t:"L'apartat de mòbils de les NOFC segueix l'estructura recomanada: disposició general, excepcions i compliment i faltes?",
+  y:["ok","Correcte.","Model NOFC intranet"],
+  n:["warn","No és obligatori, però és l'estructura que recomana la intranet i facilita comprovar que hi són els continguts obligatoris.","Model NOFC intranet"]},
+ 
+{id:"o4", e:["pri","eso"], t:"Quan una activitat requereix tecnologia, el centre facilita dispositius propis (i no demana els personals)?",
+  y:["ok","Correcte.",DOIGC],
+  n:["ko","El centre ha de posar a disposició de l'alumnat els dispositius tecnològics necessaris quan les situacions d'aprenentatge ho requereixin. Demanar el mòbil personal contradiu la prohibició.",DOIGC+", apartat 3.1"]},
+ {id:"g13", e:["any"], t:"Hi ha un canal establert perquè les famílies i l'alumnat es comuniquin en horari lectiu sense fer servir el mòbil (secretaria, consergeria)?",
+  y:["ok","Correcte. Tal com recomana el document, convé explicar-ho a les famílies.","DOIGC, apartat 5 (recomanació)"],
+  n:["warn","És una recomanació (apartat 5, no obligatori), però evita bona part dels conflictes: si no hi ha un canal alternatiu, les famílies acaben trucant a l'alumne.","DOIGC, apartat 5 (recomanació)"]},
+ {id:"g14", e:["any"], t:"El professorat i altres adults (monitoratge, extraescolars) fan fotos o vídeos de l'alumnat amb els mòbils personals?",
+  y:["warn","El DOIGC no regula el mòbil del personal, però sí que proposa debatre'n un ús coherent i exemplar (apartat 4.2) i recorda l'obligació de complir la normativa de protecció de dades. Cal disposar de l'autorització de drets d'imatge, fer servir eines i dispositius del centre sempre que es pugui i no conservar les imatges en dispositius personals.",DOIGC+", apartats 2 i 4.2; RGPD; LOPDGDD"],
+  n:["ok","Correcte.",""]},
+ {id:"g15", e:["eso"], t:"S'aplica un règim més permissiu a l'alumnat d'ESO de 16 anys o més?",
+  y:["ko","Les normes s'apliquen per etapa, no per edat. Un alumne d'ESO de més de 16 anys està subjecte a les mateixes normes.",DOIGC],
+  n:["ok","Correcte.",DOIGC]},
+ {id:"g16", e:["pri","eso"], t:"Les NOFC estableixen que el mòbil no pot entrar al centre (no només que no es pot fer servir)?",
+  y:["ok","El DOIGC esmenta aquesta opció entre les maneres d'aplicar la prohibició que cal debatre abans de l'aprovació («els mòbils es quedaran a la motxilla, fora del centre, en espais de custòdia»). Convé que l'hagi aprovat el consell escolar, que sigui compatible amb les excepcions (NEE, viatges amb pernoctació) i que les NOFC diguin què es fa si un alumne el porta igualment.",DOIGC+", apartat 4.2"],
+  n:["ok","Correcte: el model «apagat i desat en un lloc segur» és el de referència.",DOIGC+", apartat 3.1"]},
+ {id:"g17", e:["any"], t:"El centre aplica un projecte singular autoritzat que permet un ús del mòbil fora del marc general?",
+  y:["ko","La versió del DOIGC de juny de 2026 ja no recull el procediment de projectes singulars que preveien les instruccions de 2024, i només admet els supòsits excepcionals de l'apartat 3.1. Un projecte autoritzat amb el marc anterior probablement ha perdut la cobertura: confirmeu-ho amb la Inspecció abans de mantenir-lo.",DOIGC+", apartat 3.1"],
+  n:["ok","Res a revisar en aquest punt.",""]},
+ {id:"p1", e:["post"], t:"Les NOFC limiten l'ús en activitats lectives a finalitats pedagògiques indicades pel professorat?",
+  y:["ok","Correcte.",DOIGC],
+  n:["ko","En el postobligatori, durant les activitats lectives el mòbil només es permet amb finalitat pedagògica i amb indicacions del professorat. No pot ser un ús lliure.",DOIGC+", apartat 3.2"]},
+ {id:"p4", e:["post"], t:"L'ús educatiu del mòbil al postobligatori està integrat en el projecte educatiu del centre, amb una introducció graduada segons el nivell?",
+  y:["ok","Correcte.",DOIGC+", apartat 2"],
+  n:["warn","El DOIGC demana que la concreció de l'ús educatiu del mòbil en les etapes postobligatòries s'integri en el projecte educatiu del centre i se'n gradui la introducció.",DOIGC+", apartat 2"]},
+ {id:"p2", e:["post"], t:"Les NOFC regulen l'ús en el temps no lectiu per evitar conflictes (gravacions, ús als espais compartits amb alumnat d'ESO)?",
+  y:["ok","Correcte.",DOIGC],
+  n:["warn","El centre ha de vetllar pel bon ús i pot regular-lo segons l'edat. És especialment rellevant si comparteix espais amb alumnat d'ESO.",DOIGC]},
+ {id:"p3", e:["post"], t:"En un centre amb diverses etapes, les NOFC distingeixen clarament les normes de cada etapa?",
+  y:["ok","Correcte.",DOIGC],
+  n:["ko","El DOIGC demana establir els usos per a cada etapa. Sense aquesta distinció, la norma és ambigua i difícil d'aplicar.",DOIGC]},
+];
+
+const M = [
+ ["ok","Prohibir l'ús del mòbil i del rellotge intel·ligent a infantil, primària i ESO, en horari lectiu i no lectiu","És el principi comú del marc vigent. Inclou benvinguda, entrades i sortides, esbarjo, menjador, extraescolars i activitats complementàries.",DOIGC+", apartats 2 i 3.1"],
+ ["ok","Demanar que el mòbil estigui apagat i desat en un lloc segur tota la jornada, també al transport escolar","El centre determina el lloc i el procediment, i ho ha de recollir a les NOFC.",DOIGC+", apartats 3.1 i 4.1"],
+ ["ok","Fer que el mòbil es quedi a la motxilla, en un espai de custòdia o fora del centre","Són les tres opcions que el DOIGC proposa debatre abans de l'aprovació. La decisió correspon al consell escolar.",DOIGC+", apartat 4.2"],
+ ["ok","Retirar i custodiar el mòbil i avisar la família","És el protocol que posa d'exemple el DOIGC. Ha de constar a les NOFC i a la carta de compromís, amb el lloc, el responsable i la forma de retorn.",DOIGC+", apartats 4.1 i 4.3"],
+ ["ok","Tractar com a irregularitat un mòbil encès que sona a la motxilla","És l'exemple que dona el mateix DOIGC.",DOIGC+", apartat 4.3"],
+ ["ok","Considerar falta greu no lliurar el mòbil quan es requereix","El DOIGC ho preveu expressament com a garantia.",DOIGC+", apartat 4.3"],
+ ["ok","Obrir un procediment disciplinari per gravar imatges vexatòries","És una falta greument perjudicial. La direcció determina el tipus de falta i aplica el procediment de l'art. 25.",DOIGC+", apartat 4.3; art. 25 Decret 102/2010"],
+ ["ok","Permetre el mòbil a l'ESO en convivències amb pernoctació, viatge de final d'etapa, Erasmus+ o intercanvis","Excepció potestativa: necessita acord del consell escolar i ha de constar a les NOFC. Es pot limitar per cursos i en temps d'ús.",DOIGC+", apartats 3.1 i 4.2"],
+ ["ok","Permetre el mòbil a un alumne d'ESO amb una malaltia que requereix seguiment amb el dispositiu (p. ex. diabetis)","Excepció prevista per a secundària, amb acord del consell escolar i recollida a les NOFC.",DOIGC+", apartat 3.1"],
+ ["ok","Permetre dispositius a l'alumnat amb NEE quan ho necessita","Prevista a totes les etapes obligatòries. El dispositiu i les condicions es defineixen a la CAEI i es recullen al PSI.",DOIGC+", apartat 3.1"],
+ ["ok","Al batxillerat o a l'FP de grau mitjà, permetre l'ús a classe només amb finalitat pedagògica i amb indicacions del professorat","És exactament el marc del postobligatori.",DOIGC+", apartat 3.2"],
+ ["warn","Retenir el mòbil diversos dies o fins que la família vingui al centre","El DOIGC no fixa la durada de la custòdia. Pot ser admissible si està tipificat a les NOFC i és proporcionat, però les retencions llargues són discutibles.",DOIGC+", apartat 4.3; art. 24 Decret 102/2010"],
+ ["warn","Que el professorat faci fotos de l'alumnat amb el mòbil personal","No ho regula el DOIGC, però demana complir la normativa de protecció de dades i un ús exemplar per part dels adults. Cal autorització de drets d'imatge i, preferiblement, eines del centre.",DOIGC+", apartats 2 i 4.2; RGPD"],
+ ["ok","Permetre a un alumne de primària amb diabetis fer servir el dispositiu per al control de glucosa","El model de la intranet preveu l'excepció de salut per a totes les etapes. Recolliu-la a les NOFC i, si escau, al PSI.","Model NOFC intranet; "+DOIGC+", apartat 3.1"],
+ ["warn","Permetre el mòbil en emergències per comunicar-se amb la família","Ho recull el model de la intranet, però no el DOIGC de 2026. Definiu què és una emergència i prioritzeu el canal del centre.","Model NOFC intranet"],
+ ["warn","Permetre el mòbil al transport escolar a l'alumnat que viu lluny","El model de la intranet ho admet per comunicar-se amb la família, però el DOIGC de 2026 demana el mòbil apagat i desat al transport escolar. Consulteu-ho amb la Inspecció.","Model NOFC intranet; "+DOIGC+", apartat 3.1"],
+ ["ok","Custodiar el mòbil fins al final de la jornada, amonestar l'alumne i avisar la família","És la mesura que proposa el model de la intranet per a la falta lleu.","Model NOFC intranet"],
+
+ ["ko","Mantenir un projecte singular d'ús del mòbil autoritzat amb el marc de 2024","La versió de juny de 2026 ja no preveu el procediment de singularitat. Cal confirmar-ho amb la Inspecció.",DOIGC],
+ ["ko","Permetre a l'ESO usos pedagògics del mòbil personal (antiga «Opció 2»)","No està permès. Si l'activitat ho requereix, el centre ha de facilitar els dispositius.",DOIGC+", apartat 3.1"],
+ ["ko","Permetre el mòbil a les colònies o sortides de primària","A primària no hi ha excepcions per a sortides. Les excepcions per a sortides són només per a l'ESO.",DOIGC+", apartat 3.1"],
+ ["ko","Aplicar una excepció a l'ESO sense acord del consell escolar ni previsió a les NOFC","Les excepcions només tenen cobertura si s'han acordat i s'han recollit a les NOFC.",DOIGC+", apartat 3.1"],
+ ["ko","Revisar fotos o missatges, o obligar a desbloquejar el mòbil","El DOIGC ho prohibeix expressament.",DOIGC+", apartat 4.3; art. 18 CE"],
+ ["ko","Sancionar amb una multa o cobrar per retornar el mòbil","Les sancions econòmiques no apareixen a la normativa de convivència (capítol V de la LEC).","Art. 37 LEC"],
+ ["ko","Castigar tot el grup perquè ha sonat un mòbil","Les mesures han de contribuir al procés educatiu de l'alumne i aplicar-se a la persona que ha comès la conducta.",DOIGC+", apartat 4.3; art. 24 Decret 102/2010"],
+ ["ko","Que el tutor o tutora decideixi una expulsió per un ús greu del mòbil","És la direcció qui determina el tipus de falta i aplica el procediment disciplinari.",DOIGC+", apartat 4.3; art. 25 Decret 102/2010"],
+ ["ko","Tractar qualsevol ús del mòbil com a falta greu","Contradiu el principi de proporcionalitat i l'exemple d'irregularitat del mateix DOIGC.",DOIGC+", apartat 4.3"],
+ ["ko","Permetre el mòbil a l'alumnat d'ESO de 16 anys o més","Les normes s'apliquen per etapa, no per edat.",DOIGC+", apartat 3"],
+ ["ko","Permetre el mòbil a l'esbarjo o al menjador a l'ESO","No és cap dels supòsits excepcionals previstos.",DOIGC+", apartat 3.1"],
+ ["ko","Prohibir el mòbil sense preveure cap excepció per a l'alumnat amb NEE","El DOIGC permet aquest ús quan és necessari per a l'accessibilitat, la participació i l'aprenentatge.",DOIGC+", apartat 3.1"],
+];
+
+const C = [
+ ["of","1. Disposició general · Infantil i obligatòria",
+`L'ús de telèfons mòbils està prohibit per a l'alumnat en tots els espais del centre educatiu i en totes les activitats educatives que puguin tenir lloc fora del centre. L'alumne que porti un telèfon mòbil l'ha d'apagar en entrar al centre i ha de garantir que resti apagat de manera que no es pugui accedir a les dades personals que el dispositiu emmagatzema. L'escola ha de vetllar per posar a disposició de l'alumnat els dispositius tecnològics que siguin necessaris per a l'assoliment de la competència digital en l'aplicació de les situacions d'aprenentatge que així ho requereixin.
+
+Aquestes indicacions també s'han de complir en les activitats efectuades fora del centre que complementen i/o formen part de la programació general anual. S'inclouen per tant, sortides, colònies, viatges, projectes compartits amb altres centres, activitats amb participació de les famílies o la comunitat educativa, activitats extraescolars, activitats amb entitats de l'entorn, etc. Es considera que els espais del centre com la biblioteca, el pati, els passadissos, els laboratoris, el gimnàs, les aules específiques, els tallers i anàlegs, són espais on habitualment es duen a terme activitats lectives i, per tant, s'hi ha d'aplicar la mateixa indicació.`,
+ "Per ajustar-lo al DOIGC de 2026, afegiu-hi: els rellotges intel·ligents, el transport escolar (apagat i desat) i el lloc i el procediment de desada (vegeu el text complementari)."],
+ ["of","1. Disposició general · Estudis postobligatoris",
+`L'alumnat d'estudis postobligatoris ha de ser responsable dels seus dispositius mòbils. L'ús de telèfons mòbils i altres dispositius intel·ligents s'ha de vincular a les activitats d'aprenentatge, per la qual cosa no se'n pot fer un ús lliure. El professorat ha de donar les indicacions d'ús. Qualsevol altra actuació de l'alumnat que se'n desprengui s'ha de cenyir a un ús responsable.
+
+Malgrat que bona part de l'alumnat sigui major d'edat, l'alumnat ha de ser conscient de la diferenciació entre els usos educatius i els usos socials, i cal vetllar especialment pels riscos del mal ús, el respecte als drets fonamentals i a la protecció de dades.`, ""],
+ ["of","2. Excepcions · Salut",
+`Es permet utilitzar un telèfon mòbil o dispositiu intel·ligent a l'alumnat que tingui alguna necessitat específica per motius de salut i hagi de monitorar algunes constants.`,
+ "A l'ESO, el DOIGC exigeix acord del consell escolar i que l'excepció consti a les NOFC. A primària el DOIGC no la recull expressament: recolliu-la igualment a les NOFC i, si escau, al PSI."],
+ ["of","2. Excepcions · NESE",
+`Es permet utilitzar un dispositiu mòbil a l'alumnat que, per motiu de necessitats específiques de suport educatiu, requereixi l'ús d'alguna aplicació que li faciliti l'accés a l'aprenentatge, la participació o la comunicació.`,
+ "El DOIGC parla d'alumnat amb NEE i demana que el dispositiu i les condicions es defineixin a la CAEI i es recullin al PSI. Convé afegir-ho al redactat."],
+ ["of","2. Excepcions · Transport escolar i desplaçaments entre municipis",
+`Els alumnes que visquin allunyats del centre educatiu poden utilitzar el telèfon mòbil si cal comunicar alguna informació a la família.`,
+ "No apareix al DOIGC de 2026, que demana el mòbil apagat i desat també al transport escolar. Si el centre el vol mantenir, que l'aprovi el consell escolar, limitat a comunicar-se amb la família, i consulteu-ho amb la Inspecció."],
+ ["of","2. Excepcions · Emergències",
+`En cas que es produeixi una situació d'emergència l'alumnat, pot utilitzar el telèfon mòbil per comunicar-se amb la família.`,
+ "No apareix al DOIGC de 2026. És raonable mantenir-la, però convé definir què és una emergència i preferir el canal del centre (secretaria) sempre que es pugui."],
+ ["co","2. Excepcions · Situacions excepcionals a l'ESO (DOIGC 2026)",
+`Per acord del consell escolar de data ___, es permet l'ús del mòbil a l'alumnat d'ESO en els supòsits següents: sortides de convivències amb pernoctació ([cursos], amb ús limitat a ___), viatge de final d'etapa i estades a l'estranger dins del programa Erasmus+ o altres intercanvis nacionals i internacionals.`,
+ "No forma part dels models de la intranet. Redactat complementari per recollir les excepcions que preveu l'apartat 3.1 del DOIGC."],
+ ["of","3. Compliment i faltes · Conducta contrària lleu",
+`L'ús del telèfon mòbil per part d'un alumne sense el consentiment previ d'un docent constitueix una falta lleu, si no afecta els drets fonamentals o la protecció de dades. En aquests casos, es considera una falta de disciplina. El centre ha de custodiar el mòbil fins al final de la jornada, ha d'amonestar l'alumne i el docent corresponent ho ha de comunicar a la família.`,
+ "A infantil i obligatòria, el «consentiment previ d'un docent» només pot referir-se a les excepcions previstes, perquè els usos pedagògics no estan permesos."],
+ ["of","3. Compliment i faltes · Conducta contrària greu",
+`L'ús del telèfon mòbil que vulneri els drets fonamentals de la persona constitueix una falta greument perjudicial per a la convivència. En aquests casos el mòbil queda custodiat pel centre fins al final de la jornada i s'ha d'obrir un expedient disciplinari.`,
+ "Recordeu que la direcció determina el tipus de falta i aplica el procediment de l'art. 25 del Decret 102/2010."],
+ ["of","3. Compliment i faltes · Conducta contrària molt greu",
+`Si un alumne al qual es demana que lliuri el telèfon mòbil s'hi nega, es considera falta molt greu i s'han d'aplicar les sancions corresponents a aquest tipus de falta.`,
+ "El DOIGC de 2026 la qualifica de falta greu. Totes dues qualificacions condueixen al mateix procediment, però convé que la gravetat sigui proporcionada amb la resta de faltes de les NOFC."],
+ ["of","Carta de compromís · Compromís del centre",
+`Informar la família del projecte educatiu de centre (PEC) i de les normes d'organització i funcionament del centre (NOFC), incloent-hi els acords de centre sobre l'ús dels telèfons mòbils.`, ""],
+ ["of","Carta de compromís · Compromís de la família",
+`Respectar les normes d'organització i funcionament del centre (NOFC) i la regulació dels telèfons mòbils que s'hi especifica.`, ""],
+ ["co","Complementari · Lloc i procediment de desada (contingut obligatori, DOIGC 4.1)",
+`L'alumne que porti un dispositiu mòbil o un rellotge intel·ligent l'ha de tenir apagat durant tota la jornada escolar, també al transport escolar, i desat a [la motxilla / l'espai de custòdia que determini el centre]. [Si el centre en fa la recollida: el dispositiu es diposita a ___ sota la responsabilitat de ___.] [Opció alternativa, si l'aprova el consell escolar: l'alumnat no pot entrar el mòbil al centre. Si n'hi porta un, es procedirà a ___.]`, ""],
+ ["co","Complementari · Protocol de retirada i garanties",
+`El dispositiu retirat es custodiarà a [direcció / lloc concret] fins al final de la jornada i es comunicarà a la família per [canal]. En cap cas el personal del centre accedirà al contingut del dispositiu ni en demanarà el desbloqueig. La gravetat de les conductes s'ajustarà al principi de proporcionalitat i a la resta de faltes previstes en aquestes NOFC.`, ""],
+ ["co","Complementari · Comunicació amb les famílies (recomanació DOIGC 5)",
+`Durant la jornada, la comunicació entre les famílies i l'alumnat es farà a través de la secretaria o la consergeria del centre ([telèfon]). Les famílies es comprometen a no contactar amb l'alumne pel mòbil en horari escolar.`, ""],
+];
+
+
+const $ = s=>document.querySelector(s), $$ = s=>[...document.querySelectorAll(s)];
+const LBL = {ok:"Conforme",warn:"A revisar",ko:"Incompliment probable",unk:"Pendent de comprovar"};
+let answers = {};
+try{answers = JSON.parse(localStorage.getItem("mobNofcAns")||"{}")}catch(e){}
+function save(){try{localStorage.setItem("mobNofcAns",JSON.stringify(answers))}catch(e){}}
+function stages(){return $$(".stages input:checked").map(i=>i.value)}
+function applies(q){const s=stages();return q.e.includes("any")?s.length>0:q.e.some(x=>s.includes(x))}
+function result(q){const a=answers[q.id]; if(!a) return null; if(a==="u") return ["unk","Cal comprovar-ho a les NOFC o amb l'equip directiu abans de donar-ho per bo.",""]; return q[a];}
+
+function renderQ(){
+  const box=$("#questions"); box.innerHTML="";
+  let n=0;
+  Q.filter(applies).forEach(q=>{
+    n++;
+    const r=result(q);
+    const d=document.createElement("div");
+    d.className="card q "+(r?r[0]:"");
+    d.innerHTML=`<div class="num">Pregunta ${n}</div><div class="text">${q.t}</div>
+      <div class="ans">${[["y","Sí"],["n","No"],["u","No ho sé"]].map(([k,l])=>`<button data-k="${k}" class="${answers[q.id]===k?"sel":""}">${l}</button>`).join("")}</div>
+      <div class="fb ${r?r[0]+" show":""}">${r?`<span class="tag">${LBL[r[0]]}.</span>${r[1]}${r[2]?`<span class="ref">Referència: ${r[2]}</span>`:""}`:""}</div>`;
+    d.querySelectorAll(".ans button").forEach(b=>b.onclick=()=>{answers[q.id]=b.dataset.k;save();renderQ();});
+    box.appendChild(d);
+  });
+  count();
+}
+function count(){
+  const qs=Q.filter(applies); const c={ok:0,warn:0,ko:0,unk:0}; let done=0;
+  qs.forEach(q=>{const r=result(q); if(r){c[r[0]]++;done++;}});
+  $("#cOk").textContent=c.ok+" conformes"; $("#cWarn").textContent=c.warn+" a revisar";
+  $("#cKo").textContent=c.ko+" incompliments probables"; $("#cUnk").textContent=c.unk+" pendents de comprovar";
+  $("#cTotal").textContent=done+" de "+qs.length+" respostes";
+}
+$$(".stages input").forEach(i=>i.onchange=renderQ);
+$("#btnReset").onclick=()=>{answers={};save();$("#reportBox").style.display="none";renderQ();};
+$("#btnReport").onclick=async()=>{
+  const qs=Q.filter(applies); const groups={ko:[],warn:[],unk:[],ok:[]};
+  qs.forEach(q=>{const r=result(q); if(r) groups[r[0]].push([q,r]);});
+  const et={pri:"Infantil i primària",eso:"ESO",post:"Batxillerat/CFGM"};
+  let t="AUTODIAGNOSI NOFC · ÚS DE DISPOSITIUS MÒBILS\nData: "+new Date().toLocaleDateString("ca")+"\nEtapes: "+stages().map(s=>et[s]).join(", ")+"\nMarc de referència: "+DOIGC+"\n\n";
+  const titles={ko:"INCOMPLIMENTS PROBABLES (prioritat alta)",warn:"ASPECTES A REVISAR",unk:"PENDENTS DE COMPROVAR",ok:"CONFORMES"};
+  ["ko","warn","unk","ok"].forEach(k=>{
+    if(!groups[k].length) return;
+    t+="■ "+titles[k]+" ("+groups[k].length+")\n";
+    groups[k].forEach(([q,r])=>{t+="• "+q.t+"\n"+(k==="ok"?"":"  → "+r[1]+"\n"+(r[2]?"  Ref.: "+r[2]+"\n":""));});
+    t+="\n";
+  });
+  const pend=qs.length-qs.filter(q=>answers[q.id]).length;
+  if(pend) t+="Preguntes sense respondre: "+pend+"\n\n";
+  t+="Eina orientativa. No substitueix l'assessorament de la Inspecció d'Educació.";
+  const box=$("#reportBox"); box.value=t; box.style.display="block";
+  try{await navigator.clipboard.writeText(t); toast("Informe copiat al porta-retalls");}catch(e){toast("Informe generat: seleccioneu-lo i copieu-lo");}
+};
+
+function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),2200);}
+
+let filt="all";
+function renderM(){
+  const s=$("#search").value.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
+  const g=$("#mesures"); g.innerHTML="";
+  const L={ok:"Té cobertura",warn:"Zona grisa",ko:"Sense cobertura"};
+  M.filter(m=>(filt==="all"||m[0]===filt)&&(m[1]+" "+m[2]).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").includes(s))
+   .forEach(m=>{const d=document.createElement("div");d.className="card mesura "+m[0];
+     d.innerHTML=`<div class="lbl">${L[m[0]]}</div><h3>${m[1]}</h3><div>${m[2]}</div><span class="ref">${m[3]}</span>`;g.appendChild(d);});
+  if(!g.children.length) g.innerHTML='<p class="muted">Cap mesura coincideix amb la cerca.</p>';
+}
+$("#search").oninput=renderM;
+$$(".filters button").forEach(b=>b.onclick=()=>{filt=b.dataset.f;$$(".filters button").forEach(x=>x.classList.toggle("sel",x===b));renderM();});
+
+function renderC(){
+  const box=$("#clauses");
+  C.forEach(([k,h,txt,note])=>{const d=document.createElement("div");d.className="card clause";
+    d.innerHTML=`<span class="badge ${k}">${k==="of"?"Proposta oficial · intranet":"Text complementari"}</span><h3>${h}</h3><pre></pre>${note?`<div class="note"><b>Encaix amb el DOIGC 2026:</b> ${note}</div>`:""}<p style="margin:10px 0 0"><button class="btn ghost">Copiar el text</button></p>`;
+    d.querySelector("pre").textContent=txt;
+    d.querySelector("button").onclick=async()=>{try{await navigator.clipboard.writeText(txt);toast("Text copiat");}catch(e){toast("Seleccioneu el text i copieu-lo");}};
+    box.appendChild(d);});
+}
+
+function show(v){
+  if(!document.getElementById(v)) v="autodiagnosi";
+  $$("section.view").forEach(s=>s.classList.toggle("active",s.id===v));
+  $$("nav.tabs button").forEach(b=>b.setAttribute("aria-selected",b.dataset.v===v));
+}
+$$("nav.tabs button").forEach(b=>b.onclick=()=>{location.hash=b.dataset.v;show(b.dataset.v);});
+window.addEventListener("hashchange",()=>show(location.hash.slice(1)));
+renderQ(); renderM(); renderC(); show(location.hash.slice(1)||"autodiagnosi");
+</script>
+</body>
+</html>
